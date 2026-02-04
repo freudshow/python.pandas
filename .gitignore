@@ -7,3 +7,4 @@ venv/
 data_replicated.xlsx
 *.egg-info/
 __pycache__/
+.~lock.*
