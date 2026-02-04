@@ -15,7 +15,7 @@ import sys
 
 
 def replicate_block(input_path: str, output_path: str, sheet_name: str = 'Sheet1',
-                    block_rows: int = 773, copies: int = 11,
+                    start_row: int = 1, end_row: int = 773, copies: int = 11,
                     seq_col: int = 4, desc_col: int = 10):
     """Keep rows 1..block_rows as the source block, then append copies-1 new blocks.
 
@@ -34,9 +34,14 @@ def replicate_block(input_path: str, output_path: str, sheet_name: str = 'Sheet1
     ws2 = wb2.active
     ws2.title = ws.title
 
-    # read source block into memory
+    # read source block into memory (inclusive)
+    if start_row < 1:
+        raise ValueError("start_row must be >= 1")
+    if end_row < start_row:
+        raise ValueError("end_row must be >= start_row")
+
     src_block = []
-    for r in range(1, block_rows + 1):
+    for r in range(start_row, end_row + 1):
         src_block.append([ws.cell(row=r, column=c).value for c in range(1, max_col + 1)])
 
     total = 0
@@ -74,7 +79,23 @@ if __name__ == '__main__':
     inp = sys.argv[1] if len(sys.argv) > 1 else 'data.xlsx'
     out = sys.argv[2] if len(sys.argv) > 2 else 'data_replicated.xlsx'
     sheet = sys.argv[3] if len(sys.argv) > 3 else 'Sheet1'
+    # optional: start_row end_row copies
+    try:
+        start_row = int(sys.argv[4]) if len(sys.argv) > 4 else 1
+    except ValueError:
+        print('start_row must be an integer')
+        raise
+    try:
+        end_row = int(sys.argv[5]) if len(sys.argv) > 5 else 773
+    except ValueError:
+        print('end_row must be an integer')
+        raise
+    try:
+        copies = int(sys.argv[6]) if len(sys.argv) > 6 else 11
+    except ValueError:
+        print('copies must be an integer')
+        raise
 
-    total = replicate_block(inp, out, sheet_name=sheet)
-    expected = 773 * 11
+    total = replicate_block(inp, out, sheet_name=sheet, start_row=start_row, end_row=end_row, copies=copies)
+    expected = (end_row - start_row + 1) * copies
     print(f"Wrote {total} rows to {out} (expected {expected})")
